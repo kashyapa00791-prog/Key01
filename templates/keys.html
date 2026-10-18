@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}Key Vault — NEXUS{% endblock %}
+{% block content %}
+<section class="page-heading"><div><div class="eyebrow"><span class="online-dot"></span> DATABASE / LICENSES</div><h1>KEY <span class="green">VAULT</span></h1><p class="muted">Search, control, and revoke issued license credentials.</p></div><a class="btn primary" href="{{ url_for('create_key') }}">＋ NEW LICENSE</a></section>
+<section class="panel table-panel">
+<form class="toolbar" method="get"><div><strong>LICENSE REGISTRY</strong><small>{{ rows|length }} record(s) found</small></div><div class="search-wrap"><input name="q" value="{{ q }}" placeholder="Search key, game, status…"><button class="btn ghost" type="submit">SEARCH</button></div></form>
+{% if rows %}<div class="table-wrap"><table><thead><tr><th>KEY / ID</th><th>GAME</th><th>DEVICES</th><th>DURATION</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>
+{% for row in rows %}<tr><td><code>{{ row.key_text }}</code><small>Created {{ row.created_at }}</small></td><td>{{ row.game }}</td><td>{{ row.max_devices }} max</td><td>{{ row.duration_days }} days</td><td><span class="status {{ row.status|lower|replace(' ','-') }}">{{ row.status }}</span>{% if row.expires_at %}<small>Until {{ row.expires_at }}</small>{% endif %}</td><td><div class="actions"><button type="button" class="mini" data-copy="{{ row.key_text }}">COPY</button>
+<form method="post" action="{{ url_for('change_status',key_id=row.id) }}"><select name="status" aria-label="Change status"><option value="Not Started" {% if row.status=='Not Started' %}selected{% endif %}>Not Started</option><option value="Active" {% if row.status=='Active' %}selected{% endif %}>Active</option><option value="Expired" {% if row.status=='Expired' %}selected{% endif %}>Expired</option><option value="Revoked" {% if row.status=='Revoked' %}selected{% endif %}>Revoked</option></select><button class="mini" type="submit">SET</button></form>
+<form method="post" action="{{ url_for('delete_key',key_id=row.id) }}" data-confirm="Delete this license permanently?"><button class="mini danger" type="submit">DEL</button></form></div></td></tr>{% endfor %}
+</tbody></table></div>{% else %}<div class="empty"><span>⌘</span><h3>No matching keys</h3><p>Try a different search or generate a new license.</p></div>{% endif %}
+</section>
+{% endblock %}

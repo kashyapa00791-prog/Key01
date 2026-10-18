@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% block title %}Overview — NEXUS{% endblock %}
+{% block content %}
+<section class="hero panel">
+  <div><div class="eyebrow"><span class="online-dot"></span> SYSTEM OVERVIEW</div><h1>Welcome back, <span class="green">{{ session.get('username','operator') }}</span><span class="cursor">_</span></h1><p class="muted">Your key infrastructure at a glance. Stay sharp, operator.</p></div>
+  <a class="btn primary" href="{{ url_for('create_key') }}">＋ GENERATE KEY</a>
+</section>
+<section class="stats-grid">
+  <article class="stat panel"><div class="stat-top"><span>01 / TOTAL KEYS</span><span class="stat-icon">⌘</span></div><div class="stat-num">{{ stats.total }}</div><div class="stat-foot">ALL REGISTERED LICENSES</div><div class="meter"><i style="width:{{ 100 if stats.total else 0 }}%"></i></div></article>
+  <article class="stat panel"><div class="stat-top"><span>02 / ACTIVE</span><span class="stat-icon">✓</span></div><div class="stat-num green">{{ stats.active }}</div><div class="stat-foot">CURRENTLY ENABLED</div><div class="meter"><i style="width:{{ (stats.active / stats.total * 100)|round if stats.total else 0 }}%"></i></div></article>
+  <article class="stat panel"><div class="stat-top"><span>03 / EXPIRED</span><span class="stat-icon">◷</span></div><div class="stat-num">{{ stats.expired }}</div><div class="stat-foot">NO LONGER VALID</div><div class="meter danger-meter"><i style="width:{{ (stats.expired / stats.total * 100)|round if stats.total else 0 }}%"></i></div></article>
+</section>
+<section class="panel table-panel">
+  <div class="section-head"><div><div class="eyebrow">LIVE FEED / 24H</div><h2>Recent activity</h2><p class="muted">Latest license records in the vault.</p></div><a class="btn ghost" href="{{ url_for('keys') }}">VIEW ALL KEYS ↗</a></div>
+  {% if recent %}
+  <div class="table-wrap"><table><thead><tr><th>LICENSE ID</th><th>GAME / DURATION</th><th>STATUS</th><th>CREATED</th><th></th></tr></thead><tbody>
+  {% for row in recent %}<tr><td><span class="key-glyph">⌘</span><code>{{ row.key_text }}</code></td><td>{{ row.game }}<small>{{ row.duration_days }} day(s) · {{ row.max_devices }} device(s)</small></td><td><span class="status {{ row.status|lower|replace(' ','-') }}">{{ row.status }}</span></td><td>{{ row.created_at }}</td><td><a class="text-link" href="{{ url_for('keys') }}">MANAGE →</a></td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}<div class="empty"><span>⌘</span><h3>Vault is empty</h3><p>Create your first license key to populate the activity feed.</p><a class="btn primary" href="{{ url_for('create_key') }}">GENERATE FIRST KEY</a></div>{% endif %}
+</section>
+{% endblock %}
