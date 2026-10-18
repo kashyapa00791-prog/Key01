@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block title %}Settings — NEXUS{% endblock %}
+{% block content %}
+<section class="page-heading"><div><div class="eyebrow"><span class="online-dot"></span> SYSTEM CONFIGURATION</div><h1>CONTROL <span class="green">SETTINGS</span></h1><p class="muted">Adjust the visible identity of your local panel.</p></div></section>
+<section class="panel settings-panel"><div class="form-title"><span class="stat-icon">⚙</span><div><h2>Interface settings</h2><p class="muted">These settings are saved in SQLite.</p></div></div>
+<form method="post" class="form-stack"><label>PANEL DISPLAY NAME<input name="site_name" maxlength="60" value="{{ site_name }}" required></label><button class="btn primary" type="submit">SAVE CONFIGURATION →</button></form>
+<div class="security-box"><div class="eyebrow">SECURITY REMINDER</div><p>Use a unique admin password and secret key before hosting this panel publicly. This starter project is intended as a local admin dashboard.</p></div>
+</section>
+{% endblock %}

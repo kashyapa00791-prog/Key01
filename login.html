@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% block title %}Access Portal — NEXUS{% endblock %}
+{% block content %}
+<section class="login-shell">
+  <div class="eyebrow"><span class="online-dot"></span> RESTRICTED ACCESS / 01</div>
+  <div class="lock-mark">⌑</div>
+  <h1>ENTER THE <span class="green">GRID.</span></h1>
+  <p class="muted">Authenticate to access your license control system.</p>
+  <form method="post" class="form-stack">
+    <label>OPERATOR ID<input name="username" placeholder="Enter username" autocomplete="username" required autofocus></label>
+    <label>ACCESS PHRASE<input type="password" name="password" placeholder="Enter password" autocomplete="current-password" required></label>
+    <button class="btn primary full" type="submit">INITIALIZE SESSION <span>↗</span></button>
+  </form>
+  <div class="secure-note">⌁ ENCRYPTED SESSION · AUTHORIZED USERS ONLY</div>
+</section>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% block title %}Generate License — NEXUS{% endblock %}
+{% block content %}
+<section class="page-heading"><div><div class="eyebrow"><span class="online-dot"></span> KEY FACTORY / NEW RECORD</div><h1>GENERATE <span class="green">LICENSE</span></h1><p class="muted">Issue a credential with custom duration and device limits.</p></div><a class="btn ghost" href="{{ url_for('keys') }}">← BACK TO VAULT</a></section>
+<section class="form-panel panel">
+<div class="form-title"><span class="stat-icon">⌘</span><div><h2>License configuration</h2><p class="muted">Fields marked below are saved to your local database.</p></div></div>
+<form method="post" class="create-grid">
+<label>GAME / PRODUCT<select name="game"><option>Free Fire</option><option>BGMI</option><option>PUBG Mobile</option><option>Custom App</option></select></label>
+<label>MAX DEVICES<input type="number" name="devices" min="1" max="100" value="1" required></label>
+<label>VALIDITY DURATION<select name="days"><option value="1">1 day</option><option value="3">3 days</option><option value="7">7 days</option><option value="10" selected>10 days</option><option value="20">20 days</option><option value="30">30 days</option><option value="90">90 days</option><option value="365">365 days</option></select></label>
+<label>KEY VALUE <span class="optional">OPTIONAL</span><input name="key_text" placeholder="Leave blank to auto-generate"></label>
+<label class="wide">INTERNAL NOTE<input name="note" maxlength="200" placeholder="Optional note for this license"></label>
+<div class="preview wide"><span class="eyebrow">PREVIEW / KEY FORMAT</span><code>NX-XXXX-XXXX-XXXX</code><span class="muted">A unique key is generated automatically if the key field is blank.</span></div>
+<div class="wide"><button class="btn primary full" type="submit">⚡ CREATE LICENSE KEY <span>→</span></button></div>
+</form></section>
+{% endblock %}

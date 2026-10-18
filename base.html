@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}NEXUS KEY CONTROL{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="ambient"></div>
+<header class="topbar">
+  <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-icon">⌁</span><span>NEXUS<span class="green">//</span>KEYS</span></a>
+  {% if session.get('logged_in') %}
+  <nav class="desktop-nav"><a href="{{ url_for('dashboard') }}">Overview</a><a href="{{ url_for('keys') }}">Key vault</a><a href="{{ url_for('create_key') }}">Generate</a><a href="{{ url_for('settings') }}">Settings</a></nav>
+  <div class="user-pill"><span class="online-dot"></span>{{ session.get('username','operator') }} <a href="{{ url_for('logout') }}">EXIT ↗</a></div>
+  {% endif %}
+</header>
+<main class="wrap">
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}<div class="flash-stack">{% for category,message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+{% endwith %}
+{% block content %}{% endblock %}
+<footer> <span class="green">● SYSTEM ONLINE</span><span>NEXUS CONTROL // LOCAL BUILD</span></footer>
+</main>
+<script>
+document.querySelectorAll('[data-confirm]').forEach(el=>el.addEventListener('click',e=>{if(!confirm(el.dataset.confirm)){e.preventDefault();}}));
+document.querySelectorAll('[data-copy]').forEach(el=>el.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(el.dataset.copy);el.textContent='COPIED ✓';setTimeout(()=>el.textContent='COPY',1200)}catch(e){prompt('Copy this key:',el.dataset.copy)}}));
+</script>
+</body></html>
