@@ -157,6 +157,66 @@ def settings():
         site_name = con.execute("SELECT value FROM settings WHERE name='site_name'").fetchone()["value"]
     return render_template("settings.html", site_name=site_name)
 
+# ============================================================
+#  /connect  —  mod APK / Lua loader के लिए verification endpoint
+# ============================================================
+@app.route("/connect", methods=["GET", "POST"])
+def connect():
+    # GET: health/status (browser me 404 na aaye)
+    if request.method == "GET":
+        return jsonify(ok=True, message="Nexus Connect endpoint is live. POST key to validate.")
+
+    # POST: form data या JSON दोनों accept करें
+    if request.is_json:
+        payload = request.get_json(silent=True) or {}
+    else:
+        payload = request.form.to_dict()
+
+    key_text = str(payload.get("key") or payload.get("license") or "").strip().upper()
+    device_id = str(payload.get("device_id") or payload.get("hwid") or "").strip()[:128]
+
+    if not key_text:
+        return jsonify(ok=False, error="Missing key"), 400
+
+    with db() as con:
+        row = con.execute("SELECT * FROM licenses WHERE key_text=?", (key_text,)).fetchone()
+
+    if not row:
+        return jsonify(ok=False, error="Invalid key"), 404
+    if row["status"] == "Revoked":
+        return jsonify(ok=False, error="Key revoked"), 403
+    if row["status"] == "Expired":
+        return jsonify(ok=False, error="Key expired"), 403
+
+    # expiry check (agar pehle se set hai)
+    expires = row["expires_at"]
+    if expires:
+        try:
+            exp_dt = datetime.strptime(expires, "%Y-%m-%d %H:%M")
+            if datetime.now() > exp_dt:
+                with db() as con:
+                    con.execute("UPDATE licenses SET status='Expired' WHERE id=?", (row["id"],))
+                return jsonify(ok=False, error="Key expired"), 403
+        except ValueError:
+            pass
+
+    # पहली बार activate
+    if row["status"] == "Not Started":
+        expires = (datetime.now() + timedelta(days=row["duration_days"])).strftime("%Y-%m-%d %H:%M")
+        with db() as con:
+            con.execute("UPDATE licenses SET status='Active', expires_at=? WHERE id=?", (expires, row["id"]))
+
+    return jsonify(
+        ok=True,
+        key=row["key_text"],
+        game=row["game"],
+        status="Active",
+        expires_at=expires,
+        max_devices=row["max_devices"],
+        device_id=device_id or None,
+        server_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
+
 @app.route("/api/health")
 def health():
     return jsonify(ok=True, app="Nexus Key Control", timestamp=datetime.now().isoformat(timespec="seconds"))
