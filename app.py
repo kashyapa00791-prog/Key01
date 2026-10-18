@@ -31,6 +31,16 @@ def init_db():
         con.execute("""CREATE TABLE IF NOT EXISTS settings (
             name TEXT PRIMARY KEY, value TEXT NOT NULL
         )""")
+        # नई टेबल: device bindings
+        con.execute("""CREATE TABLE IF NOT EXISTS device_bindings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            license_id INTEGER NOT NULL,
+            device_id TEXT NOT NULL,
+            first_seen TEXT NOT NULL,
+            last_seen TEXT NOT NULL,
+            UNIQUE(license_id, device_id),
+            FOREIGN KEY(license_id) REFERENCES licenses(id) ON DELETE CASCADE
+        )""")
         con.execute("INSERT OR IGNORE INTO settings(name,value) VALUES('site_name','NEXUS KEY CONTROL')")
         con.execute("INSERT OR IGNORE INTO settings(name,value) VALUES('credits','999999')")
 init_db()
@@ -142,9 +152,28 @@ def change_status(key_id):
 @login_required
 def delete_key(key_id):
     with db() as con:
+        con.execute("DELETE FROM device_bindings WHERE license_id=?", (key_id,))
         con.execute("DELETE FROM licenses WHERE id=?", (key_id,))
     flash("License key deleted.", "success")
     return redirect(url_for("keys"))
+
+# नया: admin binding reset (user फोन बदले तो)
+@app.route("/keys/<int:key_id>/reset-devices", methods=["POST"])
+@login_required
+def reset_devices(key_id):
+    with db() as con:
+        con.execute("DELETE FROM device_bindings WHERE license_id=?", (key_id,))
+    flash("Device bindings reset. Key can be activated on a new device.", "success")
+    return redirect(url_for("keys"))
+
+# नया: bindings देखने के लिए (JSON)
+@app.route("/keys/<int:key_id>/devices")
+@login_required
+def view_devices(key_id):
+    with db() as con:
+        rows = con.execute("SELECT device_id, first_seen, last_seen FROM device_bindings WHERE license_id=? ORDER BY id",
+                           (key_id,)).fetchall()
+    return jsonify(devices=[dict(r) for r in rows])
 
 @app.route("/settings", methods=["GET", "POST"])
 @login_required
@@ -159,14 +188,13 @@ def settings():
 
 # ============================================================
 #  /connect  —  mod APK / Lua loader के लिए verification endpoint
+#  अब device-lock के साथ
 # ============================================================
 @app.route("/connect", methods=["GET", "POST"])
 def connect():
-    # GET: health/status (browser me 404 na aaye)
     if request.method == "GET":
         return jsonify(ok=True, message="Nexus Connect endpoint is live. POST key to validate.")
 
-    # POST: form data या JSON दोनों accept करें
     if request.is_json:
         payload = request.get_json(silent=True) or {}
     else:
@@ -188,7 +216,6 @@ def connect():
     if row["status"] == "Expired":
         return jsonify(ok=False, error="Key expired"), 403
 
-    # expiry check (agar pehle se set hai)
     expires = row["expires_at"]
     if expires:
         try:
@@ -199,6 +226,38 @@ def connect():
                 return jsonify(ok=False, error="Key expired"), 403
         except ValueError:
             pass
+
+    # ---- DEVICE-LOCK LOGIC ----
+    # device_id optional: अगर नहीं भेजा तो lock skip (backward compatible)
+    if device_id:
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with db() as con:
+            existing = con.execute(
+                "SELECT id FROM device_bindings WHERE license_id=? AND device_id=?",
+                (row["id"], device_id)
+            ).fetchone()
+
+            if existing:
+                # पहले से bound है — last_seen update
+                con.execute("UPDATE device_bindings SET last_seen=? WHERE id=?", (now_str, existing["id"]))
+            else:
+                # नया device — count check करें
+                count = con.execute(
+                    "SELECT COUNT(*) FROM device_bindings WHERE license_id=?",
+                    (row["id"],)
+                ).fetchone()[0]
+                if count >= row["max_devices"]:
+                    return jsonify(
+                        ok=False,
+                        error="Device limit reached",
+                        max_devices=row["max_devices"],
+                        hint="Contact admin to reset device bindings"
+                    ), 403
+                # नया binding जोड़ें
+                con.execute(
+                    "INSERT INTO device_bindings(license_id, device_id, first_seen, last_seen) VALUES(?,?,?,?)",
+                    (row["id"], device_id, now_str, now_str)
+                )
 
     # पहली बार activate
     if row["status"] == "Not Started":
