@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block title %}Create Account — NEXUS{% endblock %}
+{% block content %}
+<section class="login-shell">
+  <div class="eyebrow"><span class="online-dot"></span> CREATE PRIVATE ACCOUNT / 01</div>
+  <div class="lock-mark">⌁</div>
+  <h1>CLAIM YOUR <span class="green">PANEL.</span></h1>
+  <p class="muted">Enter your Gmail manually and create a separate NEXUS password.</p>
+  <form method="post" class="form-stack">
+    <label>DISPLAY NAME<input name="display_name" placeholder="Your name" autocomplete="name" maxlength="100"></label>
+    <label>GMAIL ADDRESS<input type="email" name="email" placeholder="you@gmail.com" autocomplete="email" required autofocus></label>
+    <label>CREATE WEBSITE PASSWORD<input type="password" name="password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8" required></label>
+    <label>CONFIRM WEBSITE PASSWORD<input type="password" name="confirm_password" placeholder="Re-enter website password" autocomplete="new-password" minlength="8" required></label>
+    <button class="btn primary full" type="submit">CREATE MY ACCOUNT <span>↗</span></button>
+  </form>
+  <p class="google-caption">Already registered? <a href="{{ url_for('login') }}">Login</a></p>
+  <div class="secure-note">⌁ USE A WEBSITE PASSWORD — NOT YOUR GOOGLE/GMAIL PASSWORD</div>
+</section>
+{% endblock %}
